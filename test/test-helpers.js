@@ -255,6 +255,12 @@ function seedMaliciousThing(db, user, thing) {
     )
 }
 
+// added makeAuthHeader method for testing
+function makeAuthHeader(user) {
+  const token = Buffer.from(`${user.user_name}:${user.password}`).toString('base64')
+  return `Bearer ${token}`
+}
+
 module.exports = {
   makeUsersArray,
   makeThingsArray,
@@ -267,4 +273,5 @@ module.exports = {
   cleanTables,
   seedThingsTables,
   seedMaliciousThing,
+  makeAuthHeader,
 }

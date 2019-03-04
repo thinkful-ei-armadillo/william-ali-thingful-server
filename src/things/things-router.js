@@ -1,5 +1,7 @@
 const express = require('express')
 const ThingsService = require('./things-service')
+// import middleware to protect endpoints
+const { requireAuth } = require('../middleware/basic-auth');
 
 const thingsRouter = express.Router()
 
@@ -16,12 +18,14 @@ thingsRouter
 thingsRouter
   .route('/:thing_id')
   .all(checkThingExists)
+  .all(requireAuth)
   .get((req, res) => {
     res.json(ThingsService.serializeThing(res.thing))
   })
 
 thingsRouter.route('/:thing_id/reviews/')
   .all(checkThingExists)
+  .all(requireAuth)
   .get((req, res, next) => {
     ThingsService.getReviewsForThing(
       req.app.get('db'),
