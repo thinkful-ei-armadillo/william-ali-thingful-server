@@ -1,9 +1,9 @@
 'use strict';
 
+const AuthService = require('../auth/auth-service');
+
 // middleware that can connect to multiple endpoints
 function requireAuth(req, res, next) {
-//   console.log('requireAuth');
-//   console.log(req.get('Authorization'));
   const authToken = req.get('Authorization') || '';
 
   let bearerToken;
@@ -14,35 +14,35 @@ function requireAuth(req, res, next) {
     });
   } else {
     // if bearerToken is present, slice away bearer and store actual token in bearerToken variable
-    bearerToken = authToken.slice(6, authToken.length);
+    bearerToken = authToken.slice(7, authToken.length);
+    console.log(bearerToken);
   }
 
   // parse the base64 bearer token value out of header
-  const [tokenUserName, tokenPassword] = Buffer
-    .from(bearerToken, 'base64')
-    .toString()
-    .split(':');
+  const [tokenUserName, tokenPassword] = AuthService.parseBasicToken(
+    bearerToken
+  );
+
   // throw error if user or pw arent there
   if (!tokenUserName || !tokenPassword) {
-    return res.status(401).json({ 
-      error: 'Unauthorized request'});
+    return res.status(401).json({
+      error: 'Unauthorized request'
+    });
   }
 
-  // query blogful_users db to check for user matching this username
-  req.app.get('db')('blogful_users')
-    .where({ user_name: tokenUserName })
-    .first()
+  AuthService.getUserWithUsername(req.app.get('db'), tokenUserName)
     .then(user => {
-      // if no matching user OR password, throw 401 unauthorized
       if (!user || user.password !== tokenPassword) {
-        return res.status(401).json({ 
-          error: 'Unauthorized request'});
+        return res.status(401).json({
+          error: 'Unauthorized request'
+        });
       }
+      req.user = user;
       next();
     })
     .catch(next);
 }
-  
+
 module.exports = {
   requireAuth,
 };
